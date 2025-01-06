@@ -1,18 +1,21 @@
 package com.cc.ccPictureBackend.config;
 
-import com.qcloud.cos.region.Region;
 import com.qcloud.cos.COSClient;
-import com.qcloud.cos.ClientConfig;
 import com.qcloud.cos.auth.BasicCOSCredentials;
 import com.qcloud.cos.auth.COSCredentials;
+import com.qcloud.cos.http.HttpProtocol;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import com.qcloud.cos.ClientConfig;
 import org.springframework.context.annotation.Bean;
+import com.qcloud.cos.region.Region;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.PropertySource;
 
+/**
+ * @Author cuicui
+ * @Description 配置类
+ */
 @Configuration
-//@PropertySource("application-local.yml")
 @ConfigurationProperties(prefix = "cos.client")
 @Data
 public class CosClientConfig {
@@ -48,8 +51,8 @@ public class CosClientConfig {
         COSCredentials cred = new BasicCOSCredentials(secretId, secretKey);
         // 设置bucket的区域, COS地域的简称请参照 https://www.qcloud.com/document/product/436/6224
         ClientConfig clientConfig = new ClientConfig(new Region(region));
+        clientConfig.setHttpProtocol(HttpProtocol.https);
         // 生成cos客户端
         return new COSClient(cred, clientConfig);
     }
 }
-
