@@ -188,7 +188,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
         // 原始分页信息复制到 新分页
         Page<PictureVO> pictureVOPage = new Page<>(picturePage.getCurrent(), picturePage.getSize(), picturePage.getTotal());
         // 原始分页为空，返回空分页
-        if (CollUtil.isNotEmpty(pictureList)) {
+        if (CollUtil.isEmpty(pictureList)) {
             return pictureVOPage;
         }
         // pictureList 封装到 pictureVOList,使用stream流
