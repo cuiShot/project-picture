@@ -92,7 +92,7 @@ public class PictureController {
 
         // 删除
         boolean result = pictureService.removeById(deleteRequest.getId());
-        ThrowUtils.throwIf(result, ErrorCode.OPERATION_ERROR);
+        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
         return ResultUtils.success(true);
     }
 
@@ -122,7 +122,7 @@ public class PictureController {
 
         // 更新数据库
         boolean b = pictureService.updateById(picture);
-        ThrowUtils.throwIf(b, ErrorCode.OPERATION_ERROR);
+        ThrowUtils.throwIf(!b, ErrorCode.OPERATION_ERROR);
         return ResultUtils.success(true);
     }
 
@@ -229,7 +229,7 @@ public class PictureController {
         }
         // 操作数据库
         boolean b = pictureService.updateById(picture);
-        ThrowUtils.throwIf(b, ErrorCode.OPERATION_ERROR);
+        ThrowUtils.throwIf(!b, ErrorCode.OPERATION_ERROR);
         return ResultUtils.success(true);
     }
 
