@@ -45,7 +45,7 @@
 </template>
 <script lang="ts" setup>
 import { computed, h, ref } from 'vue'
-import { HomeOutlined, LogoutOutlined } from '@ant-design/icons-vue'
+import { HomeOutlined ,LogoutOutlined} from '@ant-design/icons-vue'
 import { type MenuProps, message } from 'ant-design-vue'
 import { useRouter } from 'vue-router'
 import { useLoginUserStore } from '@/stores/useLoginUserStore.ts'
@@ -71,18 +71,11 @@ const originItems = [
     label: '关于',
     title: '关于',
   },
-  {
-    key: '/add_picture',
-    label: '创建图片',
-    title: '创建图片',
-  },
-  {
-    key: '/admin/pictureManage',
-    label: '图片管理',
-    title: '图片管理',
-  },
-
-
+  // {
+  //   key: 'others',
+  //   label: h('a', { href: 'https://www.codefather.cn', target: '_blank' }, '编程导航'),
+  //   title: '编程导航',
+  // },
 ]
 
 // 过滤菜单项
@@ -90,7 +83,7 @@ const filterMenus = (menus = [] as MenuProps['items']) => {
   return menus?.filter((menu) => {
     if (menu.key.startsWith('/admin')) {
       const loginUser = loginUserStore.loginUser
-      if (!loginUser || loginUser.userRole !== 'admin') {
+      if (!loginUser || loginUser.userRole !== "admin") {
         return false
       }
     }
@@ -100,6 +93,7 @@ const filterMenus = (menus = [] as MenuProps['items']) => {
 
 // 展示在菜单的路由数组
 const items = computed<MenuProps['items']>(() => filterMenus(originItems))
+
 
 const router = useRouter()
 // 当前要高亮的菜单项
@@ -116,17 +110,17 @@ const doMenuClick = ({ key }) => {
   })
 }
 
-const doLogout = async () => {
-  const res = await userLogoutUsingPost()
+const doLogout = async () =>{
+  const res  = await userLogoutUsingPost()
   console.log(res)
   if (res.data.code === 0) {
     loginUserStore.setLoginUser({
-      userName: '未登录',
+      userName :'未登录'
     })
     message.success('退出登录成功')
     await router.push('/')
-  } else {
-    message.error('退出登录失败' + res.data.message)
+  }else{
+    message.error('退出登录失败'+ res.data.message)
   }
 }
 </script>
