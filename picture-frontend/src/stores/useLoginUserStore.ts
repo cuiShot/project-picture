@@ -7,14 +7,13 @@ import { getLoginUserUsingGet } from '@/api/userController.ts'
  * 用户的登录信息是全局变量
  */
 
-
 /**
  * 存储登录用户信息的状态
  */
 export const useLoginUserStore = defineStore('loginUser', () => {
   // loginUser 保存用户信息的全局变量
   const loginUser = ref<API.LoginUserVO>({
-    userName: '未登录'
+    userName: '未登录',
   })
 
   /**
@@ -26,7 +25,6 @@ export const useLoginUserStore = defineStore('loginUser', () => {
       loginUser.value = res.data.data
     }
   }
-
 
   /**
    * 设置登录用户

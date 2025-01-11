@@ -1,11 +1,11 @@
-import axios from "axios";
-import {message} from "ant-design-vue";
+import axios from 'axios'
+import { message } from 'ant-design-vue'
 // 创建 Axios 实例
 const myAxios = axios.create({
   baseURL: 'http://localhost:8123',
   timeout: 60000,
   withCredentials: true,
-});
+})
 // 全局请求拦截器
 myAxios.interceptors.request.use(
   function (config) {
@@ -40,4 +40,4 @@ myAxios.interceptors.response.use(
     return Promise.reject(error)
   },
 )
-export default myAxios;
+export default myAxios
