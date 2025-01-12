@@ -5,7 +5,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
+import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSON;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cc.ccPictureBackend.annotation.AuthCheck;
@@ -27,11 +29,18 @@ import com.cc.ccPictureBackend.model.enums.UserRoleEnum;
 import com.cc.ccPictureBackend.model.vo.PictureVO;
 import com.cc.ccPictureBackend.service.PictureService;
 import com.cc.ccPictureBackend.service.UserService;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.util.DigestUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Resource;
 import javax.servlet.ServletRequest;
@@ -51,6 +60,8 @@ public class PictureController {
     private UserService userService;
     @Autowired
     private ServletRequest httpServletRequest;
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
 
 
     /**
@@ -64,7 +75,7 @@ public class PictureController {
     @PostMapping("/upload")
 //    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<PictureVO> uploadPicture(@RequestPart("file") MultipartFile multipartFile,
-            PictureUploadRequest pictureUploadRequest,HttpServletRequest request) {
+                                                 PictureUploadRequest pictureUploadRequest, HttpServletRequest request) {
         User loginUser = userService.getLoginUser(request);
         PictureVO pictureVO = pictureService.uploadPicture(multipartFile, pictureUploadRequest, loginUser);
         return ResultUtils.success(pictureVO);
@@ -105,9 +116,7 @@ public class PictureController {
      *
      * @param pictureUpdateRequest 封装的更新图片的类
      * @param request
-     * @return
-     *
-     * TODO 设置了审核参数，但是没有更新数据库啊
+     * @return TODO 设置了审核参数，但是没有更新数据库啊
      */
     @PostMapping("/update")
 //    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
@@ -235,7 +244,7 @@ public class PictureController {
         Picture oldPicture = pictureService.getById(picture.getId());
         ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR);
         // 管理员 和 本人 可以进行图片编辑
-        if(!userService.isAdmin(loginUser) || !oldPicture.getUserId().equals(loginUser.getId())) {
+        if (!userService.isAdmin(loginUser) || !oldPicture.getUserId().equals(loginUser.getId())) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
         }
         // 补充审核参数
@@ -259,6 +268,7 @@ public class PictureController {
 
     /**
      * 图片审核请求
+     *
      * @param pictureReviewRequest 图片审核请求封装类
      * @param request
      * @return
@@ -274,15 +284,15 @@ public class PictureController {
     }
 
     /**
-     *
      * 通过 url 上传图片的方法
+     *
      * @param pictureUploadRequest
      * @param request
      * @return
      */
     @PostMapping("/upload/url")
-    public  BaseResponse<PictureVO> uploadPictureByURL(@RequestBody PictureUploadRequest pictureUploadRequest, HttpServletRequest request){
-        ThrowUtils.throwIf(pictureUploadRequest == null, ErrorCode.PARAMS_ERROR,"请求为空");
+    public BaseResponse<PictureVO> uploadPictureByURL(@RequestBody PictureUploadRequest pictureUploadRequest, HttpServletRequest request) {
+        ThrowUtils.throwIf(pictureUploadRequest == null, ErrorCode.PARAMS_ERROR, "请求为空");
         String fileUrl = pictureUploadRequest.getFileUrl();
         User loginUser = userService.getLoginUser(request);
         PictureVO pictureVO = pictureService.uploadPicture(fileUrl, pictureUploadRequest, loginUser);
@@ -292,6 +302,7 @@ public class PictureController {
 
     /**
      * 批量抓取 bing 中的图片的方法
+     *
      * @param pictureUploadByBatchRequest
      * @param request
      * @return count 返回抓取到的图片总数
@@ -306,6 +317,67 @@ public class PictureController {
         User loginUser = userService.getLoginUser(request);
         int uploadCount = pictureService.uploadPictureByBatch(pictureUploadByBatchRequest, loginUser);
         return ResultUtils.success(uploadCount);
+    }
+
+
+    /**
+     * 构造本地缓存
+     */
+    private final Cache<String, String> LOCAL_CACHE =
+            Caffeine.newBuilder().initialCapacity(1024)
+                    .maximumSize(10000L)
+                    // 缓存 5 分钟移除
+                    .expireAfterWrite(5L, TimeUnit.MINUTES)
+                    .build();
+
+
+    /**
+     * 使用 多级缓存
+     * Caffeine 和 Redis 的listPictureVOByPage 的方法
+     *
+     * @param pictureQueryRequest
+     * @param request
+     * @return
+     */
+    @PostMapping("/list/page/vo/cache")
+    public BaseResponse<Page<PictureVO>> listPictureVOByPageWithCache(@RequestBody PictureQueryRequest pictureQueryRequest,
+                                                                      HttpServletRequest request) {
+        int current = pictureQueryRequest.getCurrent();
+        int pageSize = pictureQueryRequest.getPageSize();
+        ThrowUtils.throwIf(pageSize > 20, ErrorCode.PARAMS_ERROR);
+        // 普通用户只能查看过审的图片
+        pictureQueryRequest.setReviewStatus(PictureReviewStatusEnmu.PASS.getValue());
+        // 构建缓存 key
+        String queryCondition = JSONUtil.toJsonStr(pictureQueryRequest);
+        String hashKey = DigestUtils.md5DigestAsHex(queryCondition.getBytes());
+        String cacheKey = "listPictureVOByPage:" + hashKey;
+
+        // 1.从 Caffeine 中查，命中就返回，
+        String cacheValue = LOCAL_CACHE.getIfPresent(cacheKey);
+        if (cacheValue != null) {
+            Page<PictureVO> cachePage = JSONUtil.toBean(cacheValue, Page.class);
+            return ResultUtils.success(cachePage);
+        }
+        // 2.Caffeine 不命中,查 从Redis 中查
+        ValueOperations<String, String> valueOps = stringRedisTemplate.opsForValue();
+        cacheValue = valueOps.get(cacheKey);
+        if (cacheValue != null) {
+            Page<PictureVO> cachePage = JSONUtil.toBean(cacheValue, Page.class);
+            return ResultUtils.success(cachePage);
+        }
+
+        // 3. redis 也缓存不命中,查数据库,
+        Page<Picture> picturePage = pictureService.page(new Page<>(current, pageSize),
+                pictureService.getQueryWrapper(pictureQueryRequest));
+        Page<PictureVO> pictureVOPage = pictureService.getPictureVOPage(picturePage, request);
+
+        // 设置 Redis 缓存 10 分钟之内的过期时间,防止雪崩.
+        int cacheExpireTIme = 300 + RandomUtil.randomInt(0, 300);
+        // 把结果 放到 caffeine 和 Redis
+        LOCAL_CACHE.put(cacheKey, JSONUtil.toJsonStr(pictureVOPage));
+        valueOps.set(cacheKey, JSONUtil.toJsonStr(pictureVOPage), cacheExpireTIme);
+        // 返回结果
+        return ResultUtils.success(pictureVOPage);
     }
 
 }
