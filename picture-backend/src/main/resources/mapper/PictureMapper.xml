@@ -20,6 +20,7 @@
         <result property="editTime" column="editTime" jdbcType="TIMESTAMP"/>
         <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
         <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
+        <result property="thumbnailUrl" column="tags" jdbcType="VARCHAR"/>
     </resultMap>
     <sql id="Base_Column_List">
         id,url,name,
@@ -27,6 +28,6 @@
         picSize,picWidth,picHeight,
         picScale,picFormat,userId,
         createTime,editTime,updateTime,
-        isDelete
+        isDelete,thumbnailUrl
     </sql>
 </mapper>

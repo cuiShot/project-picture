@@ -6,9 +6,11 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.cc.ccPictureBackend.annotation.AuthCheck;
 import com.cc.ccPictureBackend.exception.BusinessException;
 import com.cc.ccPictureBackend.exception.ErrorCode;
 import com.cc.ccPictureBackend.exception.ThrowUtils;
+import com.cc.ccPictureBackend.manager.CosManager;
 import com.cc.ccPictureBackend.manager.FileManager;
 import com.cc.ccPictureBackend.manager.upload.FilePictureUpload;
 import com.cc.ccPictureBackend.manager.upload.PictureUploadTemplate;
@@ -29,6 +31,8 @@ import com.cc.ccPictureBackend.service.UserService;
 import com.qcloud.cos.utils.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.jsoup.Jsoup;
@@ -39,6 +43,8 @@ import org.jsoup.select.Elements;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -65,6 +71,9 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
 
     @Resource
     private UrlPictureUpload urlPictureUpload;
+
+    @Autowired
+    private CosManager cosManager;
 
     /**
      * 上传图片，返回 Picture 视图
@@ -115,6 +124,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
         // 构造要入库的图片信息
         Picture picture = new Picture();
         picture.setUrl(uploadPictureResult.getUrl());
+        picture.setThumbnailUrl(uploadPictureResult.getThumbnailUrl());
         // 构造要入库的图片信息 批量抓取传入的名字
         String picName = uploadPictureResult.getPicName();
         if (pictureUploadRequest != null && StrUtil.isNotBlank(pictureUploadRequest.getPicName())) {
@@ -430,5 +440,50 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
         }
         return uploadCount;
     }
+
+
+    /**
+     * 删除 COS 中旧的对象的方法,异步调用
+     * TODO 将该方法应用到 实际业务的接口中
+     * @param oldPicture
+     */
+    @Async
+    @Override
+    public void clearPictureFile(Picture oldPicture) {
+        // 判断该图片是否被多条记录使用
+        String pictureUrl = oldPicture.getUrl();
+        long count = this.lambdaQuery()
+                .eq(Picture::getUrl, pictureUrl)
+                .count();
+        // 有不止一条记录用到了该图片，不清理
+        if (count > 1) {
+            return;
+        }
+
+        String urlString = oldPicture.getUrl();
+        // 清理 webp 图
+        cosManager.deleteObject(getKeyFromUrl(urlString));
+        // 清理缩略图
+        String thumbnailUrl = oldPicture.getThumbnailUrl();
+        if (StrUtil.isNotBlank(thumbnailUrl)) {
+            cosManager.deleteObject(getKeyFromUrl(thumbnailUrl));
+        }
+    }
+
+    /**
+     * 从 完整 URL 得到 key
+     * @param totalUrl
+     * @return
+     */
+    public String getKeyFromUrl(String totalUrl) {
+        URL url = null;
+        try {
+            url = new URL(totalUrl);
+            return url.getPath();
+        } catch (MalformedURLException e) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"图片url不正确");
+        }
+    }
+
 
 }

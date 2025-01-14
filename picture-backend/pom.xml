@@ -126,7 +126,7 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <version>${spring-boot.version}</version>
                 <configuration>
-                    <mainClass>com.cc.ccPictureBackend.YuPictureBackendApplication</mainClass>
+                    <mainClass>com.cc.ccPictureBackend.CCPictureBackendApplication</mainClass>
                     <skip>true</skip>
                 </configuration>
                 <executions>
