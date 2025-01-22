@@ -3,6 +3,7 @@ package com.cc.ccPictureBackend.service;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.cc.ccPictureBackend.model.dto.picture.PictureEditRequest;
 import com.cc.ccPictureBackend.model.dto.picture.PictureQueryRequest;
 import com.cc.ccPictureBackend.model.dto.picture.PictureUploadByBatchRequest;
 import com.cc.ccPictureBackend.model.dto.picture.PictureUploadRequest;
@@ -88,6 +89,7 @@ public interface PictureService extends IService<Picture> {
 
     /**
      * 上传文件 方法
+     *
      * @param inputSource
      * @param pictureUploadRequest
      * @param loginUser
@@ -109,8 +111,33 @@ public interface PictureService extends IService<Picture> {
 
     /**
      * 删除 COS 中 旧图片的方法
+     *
      * @param oldPicture
      */
     void clearPictureFile(Picture oldPicture);
+
+
+    /**
+     * 编辑图片方法封装
+     * @param pictureEditRequest
+     * @param loginUser
+     */
+    void editPicture(PictureEditRequest pictureEditRequest, User loginUser);
+
+    /**
+     * 删除图片方法
+     *
+     * @param pictureId
+     * @param loginUser
+     */
+    void deletePicture(long pictureId, User loginUser);
+
+    /**
+     * 权限校验的封装方法
+     *
+     * @param loginUser
+     * @param picture
+     */
+    void checkPictureAuth(User loginUser, Picture picture);
 
 }
