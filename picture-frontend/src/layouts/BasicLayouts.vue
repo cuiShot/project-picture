@@ -2,44 +2,56 @@
   <div id="basicLayout">
     <a-layout>
       <a-layout-header class="header">
-        <GlobalHeader/>
+        <GlobalHeader />
       </a-layout-header>
-      <a-layout-content class = "content">
-        <router-view/>
-      </a-layout-content>
+      <a-layout>
+        <GlobalSider class="sider" />
+        <a-layout-content class="content">
+          <router-view />
+        </a-layout-content>
+      </a-layout>
       <a-layout-footer class="footer">
         <a href=" " target="_blank">cuicui的主页</a>
       </a-layout-footer>
-
     </a-layout>
   </div>
 </template>
 
 <script setup lang="ts">
-
 import GlobalHeader from '@/components/GlobalHeader.vue'
+import GlobalSider from '@/components/GlobalSilder.vue';
 </script>
 
 <style scoped>
-#basicLayout .header{
+#basicLayout .header {
   padding-bottom: 10px;
   background: white;
   color: unset;
-  margin-bottom: 15px;
+  margin-bottom: 1px;
 }
+#basicLayout .sider {
+  background: #fff;
+  border-right: 0.5px solid #eee;
+  padding-top: 20px;
+}
+#basicLayout :deep(.ant-menu-root) {
+  border-bottom: none !important;
+  border-inline-end: none !important;
 
-#basicLayout .content{
-  padding: 20px;
-  background: linear-gradient(to right,#efefef,#fff);
-  margin-bottom: 30px;
-}
-#basicLayout .footer {
-  background: #efefef;
-  padding: 16px;
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  text-align: center;
+  #basicLayout .content {
+    padding: 20px;
+    background: linear-gradient(to right, #efefef, #fff);
+    margin-bottom: 30px;
+  }
+
+  #basicLayout .footer {
+    background: #efefef;
+    padding: 16px;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    text-align: center;
+  }
 }
 </style>
