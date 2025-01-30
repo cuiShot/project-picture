@@ -121,6 +121,12 @@ public class Picture implements Serializable {
 
 
     /**
+     * 图片主色调
+     */
+    private String picColor;
+
+
+    /**
      * 是否删除
      */
     @TableLogic

@@ -11,6 +11,8 @@ import cn.hutool.json.JSON;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cc.ccPictureBackend.annotation.AuthCheck;
+import com.cc.ccPictureBackend.api.imageSearch.ImageSearchApiFacade;
+import com.cc.ccPictureBackend.api.imageSearch.model.ImageSearchResult;
 import com.cc.ccPictureBackend.common.BaseResponse;
 import com.cc.ccPictureBackend.common.DeleteRequest;
 import com.cc.ccPictureBackend.common.PageRequest;
@@ -371,5 +373,57 @@ public class PictureController {
         // 返回结果
         return ResultUtils.success(pictureVOPage);
     }
+
+
+    /**
+     * 以图搜图接口
+     * @param searchPictureByPictureRequest 请求封装
+     * @return
+     */
+    @PostMapping("/search/picture")
+    public BaseResponse<List<ImageSearchResult>> searchPictureByPicture(@RequestBody SearchPictureByPictureRequest searchPictureByPictureRequest){
+        ThrowUtils.throwIf(searchPictureByPictureRequest == null, ErrorCode.PARAMS_ERROR);
+        Long pictureId = searchPictureByPictureRequest.getPictureId();
+        ThrowUtils.throwIf(pictureId == null, ErrorCode.PARAMS_ERROR);
+        Picture oldPicture = pictureService.getById(pictureId);
+        ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR);
+        List<ImageSearchResult> imageList = ImageSearchApiFacade.searchImage(oldPicture.getUrl());
+        return ResultUtils.success(imageList);
+    }
+
+
+    /**
+     * 按照颜色搜索图片
+     * @param searchPictureByColorRequest
+     * @param request
+     * @return
+     */
+    @PostMapping("/search/color")
+    public BaseResponse<List<PictureVO>> searchPictureByColor(@RequestBody SearchPictureByColorRequest searchPictureByColorRequest, HttpServletRequest request) {
+        ThrowUtils.throwIf(searchPictureByColorRequest == null, ErrorCode.PARAMS_ERROR);
+        String picColor = searchPictureByColorRequest.getPicColor();
+        Long spaceId = searchPictureByColorRequest.getSpaceId();
+        User loginUser = userService.getLoginUser(request);
+        List<PictureVO> result = pictureService.searchPictureByColor(spaceId, picColor, loginUser);
+        return ResultUtils.success(result);
+    }
+
+    /**
+     * 图片批处理方法
+     * 批量更新图片的额分类和标签
+     * 业务层实现了两个方法，使用线程池分批异步进行优化
+     * 现在调用的是优化前的方法
+     * @param pictureEditByBatchRequest
+     * @param request
+     * @return
+     */
+    @PostMapping("/edit/batch")
+    public BaseResponse<Boolean> editPictureByBatch(@RequestBody PictureEditByBatchRequest pictureEditByBatchRequest, HttpServletRequest request) {
+        ThrowUtils.throwIf(pictureEditByBatchRequest == null, ErrorCode.PARAMS_ERROR);
+        User loginUser = userService.getLoginUser(request);
+        pictureService.editPictureByBatch(pictureEditByBatchRequest, loginUser);
+        return ResultUtils.success(true);
+    }
+
 
 }
