@@ -7,6 +7,9 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.cc.ccPictureBackend.api.aliyunAPI.AliYunApi;
+import com.cc.ccPictureBackend.api.aliyunAPI.model.CreateOutPaintingTaskRequest;
+import com.cc.ccPictureBackend.api.aliyunAPI.model.CreateOutPaintingTaskResponse;
 import com.cc.ccPictureBackend.exception.BusinessException;
 import com.cc.ccPictureBackend.exception.ErrorCode;
 import com.cc.ccPictureBackend.exception.ThrowUtils;
@@ -32,6 +35,7 @@ import com.cc.ccPictureBackend.utils.ColorSimilarUtils;
 import com.cc.ccPictureBackend.utils.ColorTransformUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.BeanIsAbstractException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -85,6 +89,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
 
     @Resource
     private ThreadPoolTaskExecutor customExecutor;
+    @Autowired
+    private AliYunApi aliYunApi;
 
 
     /**
@@ -835,5 +841,29 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
     }
 
 
+    /**
+     * 扩图任务的方法
+     * 从数据库获得图片地址，构造请求参数后调用 api 创建扩图任务
+     * @param request
+     * @param loginUser
+     * @return
+     */
+    @Override
+    public CreateOutPaintingTaskResponse createOutPaintingTask(CreatePictureOutPaintingTaskRequest request, User loginUser){
+        // 获取图片信息
+        Long pictureId = request.getPictureId();
+        Picture picture = Optional.ofNullable(this.getById(pictureId))
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_ERROR,"图片不存在"));
+        // 权限校验
+        checkPictureAuth(loginUser, picture);
+        // 构造请求参数
+        CreateOutPaintingTaskRequest taskRequest = new CreateOutPaintingTaskRequest();
+        CreateOutPaintingTaskRequest.Input input = new CreateOutPaintingTaskRequest.Input();
+        input.setImageUrl(picture.getUrl());
+        taskRequest.setInput(input);
+        BeanUtils.copyProperties(request,taskRequest);
+        // 创建任务
+        return aliYunApi.createOutPaintingTask(taskRequest);
+    }
 
 }

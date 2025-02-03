@@ -24,6 +24,8 @@ spring:
     password: 123456
 #  profiles:
 #    active: local
+
+
 mybatis-plus:
   configuration:
     # MyBatis 配置
