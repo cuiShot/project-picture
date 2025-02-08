@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.cc.ccPictureBackend.constant.UserConstant;
 import com.cc.ccPictureBackend.exception.BusinessException;
 import com.cc.ccPictureBackend.exception.ErrorCode;
+import com.cc.ccPictureBackend.manager.auth.StpKit;
 import com.cc.ccPictureBackend.mapper.UserMapper;
 import com.cc.ccPictureBackend.model.dto.user.UserQueryRequest;
 import com.cc.ccPictureBackend.model.entity.User;
@@ -130,6 +131,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         }
         // 用户存在,记录用户登录状态,返回脱敏后用户信息
         request.getSession().setAttribute(USER_LOGIN_STATE,user);
+        // 记录用户登录状态到 Sa-Token ，便于鉴权的时候使用，
+        // 注意保证该用户信息与 SpringSession 中的信息过期时间一致
+        StpKit.SPACE.login(user.getId());
+        StpKit.SPACE.getSession().set(USER_LOGIN_STATE,user);
+
         return this.getLoginUserVO(user);
     }
 

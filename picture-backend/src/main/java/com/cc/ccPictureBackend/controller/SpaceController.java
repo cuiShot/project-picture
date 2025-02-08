@@ -9,6 +9,7 @@ import com.cc.ccPictureBackend.constant.UserConstant;
 import com.cc.ccPictureBackend.exception.BusinessException;
 import com.cc.ccPictureBackend.exception.ErrorCode;
 import com.cc.ccPictureBackend.exception.ThrowUtils;
+import com.cc.ccPictureBackend.manager.auth.SpaceUserAuthManager;
 import com.cc.ccPictureBackend.model.dto.space.*;
 import com.cc.ccPictureBackend.model.entity.Space;
 import com.cc.ccPictureBackend.model.entity.User;
@@ -43,6 +44,8 @@ public class SpaceController {
     private SpaceService spaceService;
     @Autowired
     private UserService userService;
+    @Autowired
+    private SpaceUserAuthManager spaceUserAuthManager;
 
     /*
     更新空间
@@ -92,7 +95,7 @@ public class SpaceController {
         ThrowUtils.throwIf(oldSpace == null, ErrorCode.NOT_FOUND_ERROR, "数据不存在");
         // 更新数据库
         boolean result = spaceService.updateById(space);
-        ThrowUtils.throwIf(result, ErrorCode.OPERATION_ERROR, "操作错误，更新失败");
+        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR, "操作错误，更新失败");
         return ResultUtils.success(true);
     }
 
@@ -163,8 +166,13 @@ public class SpaceController {
         // 查询数据库
         Space space = spaceService.getById(id);
         ThrowUtils.throwIf(space == null, ErrorCode.NOT_FOUND_ERROR);
+        User loginUser = userService.getLoginUser(request);
+        // 设置权限列表
+        List<String> permissionList = spaceUserAuthManager.getPermissionList(space, loginUser);
+        SpaceVO spaceVO = spaceService.getSpaceVO(space, request);
+        spaceVO.setPermissionList(permissionList);
         // 获取封装类
-        return ResultUtils.success(spaceService.getSpaceVO(space, request));
+        return ResultUtils.success(spaceVO);
     }
 
     /**

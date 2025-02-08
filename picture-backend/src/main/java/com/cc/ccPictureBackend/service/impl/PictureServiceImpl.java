@@ -115,10 +115,11 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
         if (spaceId != null) {
             Space space = spaceService.getById(spaceId);
             ThrowUtils.throwIf(space == null, ErrorCode.NOT_FOUND_ERROR, "图片所属空间不存在");
-            // 管理员（现在的系统设计就是空间创建人）本人校验
-            if (!loginUser.getId().equals(space.getUserId())) {
-                throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "你没有此空间上传权限");
-            }
+            // 改为使用统一的权限校验
+//            // 校验是否有空间的权限，仅空间管理员才能上传
+//            if (!loginUser.getId().equals(space.getUserId())) {
+//                throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "没有空间权限");
+//            }
 
             // 校验额度
             if (space.getTotalCount() >= space.getMaxCount()) {
@@ -139,10 +140,12 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
         if (pictureId != null) {
             Picture oldPicture = this.getById(pictureId);
             ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR, "图片不存在");
+
+            //改为使用统一的权限认证
             // 仅本人或管理员可编辑
-            if (!oldPicture.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
-                throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
-            }
+//            if (!oldPicture.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
+//                throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+//            }
 
             // 新增空间逻辑
             // 校验空间是否一致,没传 spaceId 用 oldPicture的,传了的话用新的
@@ -584,8 +587,10 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
         long id = pictureEditRequest.getId();
         Picture oldPicture = this.getById(id);
         ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR);
+
+        // 改为使用注解权限
         // 校验权限
-        checkPictureAuth(loginUser, oldPicture);
+//        checkPictureAuth(loginUser, oldPicture);
         // 补充审核参数
         this.fillReviewParams(picture, loginUser);
         // 操作数据库
@@ -607,8 +612,10 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
         // 判断是否存在
         Picture oldPicture = this.getById(pictureId);
         ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR);
+
+        // 改为使用统一的权限认证
         // 校验权限
-        checkPictureAuth(loginUser, oldPicture);
+//        checkPictureAuth(loginUser, oldPicture);
 
         // 加入事务,更新两个表了
         transactionTemplate.execute(status -> {
@@ -854,8 +861,10 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
         Long pictureId = request.getPictureId();
         Picture picture = Optional.ofNullable(this.getById(pictureId))
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_ERROR,"图片不存在"));
+
+        // 改为使用注解鉴权
         // 权限校验
-        checkPictureAuth(loginUser, picture);
+//        checkPictureAuth(loginUser, picture);
         // 构造请求参数
         CreateOutPaintingTaskRequest taskRequest = new CreateOutPaintingTaskRequest();
         CreateOutPaintingTaskRequest.Input input = new CreateOutPaintingTaskRequest.Input();

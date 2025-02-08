@@ -1,5 +1,7 @@
 package com.cc.ccPictureBackend.exception;
 
+import cn.dev33.satoken.exception.NotLoginException;
+import cn.dev33.satoken.exception.NotPermissionException;
 import com.cc.ccPictureBackend.common.BaseResponse;
 import com.cc.ccPictureBackend.common.ResultUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +20,19 @@ public class    GlobalExceptionHandler {
         log.error("BusinessException", e);
         return ResultUtils.error(e.getCode(), e.getMessage());
     }
+
+    @ExceptionHandler(NotLoginException.class)
+    public BaseResponse<?> notLoginException(NotLoginException e) {
+        log.error("NotLoginException", e);
+        return ResultUtils.error(ErrorCode.NOT_LOGIN_ERROR, e.getMessage());
+    }
+
+    @ExceptionHandler(NotPermissionException.class)
+    public BaseResponse<?> notPermissionExceptionHandler(NotPermissionException e) {
+        log.error("NotPermissionException", e);
+        return ResultUtils.error(ErrorCode.NO_AUTH_ERROR, e.getMessage());
+    }
+
 
     @ExceptionHandler(RuntimeException.class)
     public BaseResponse<?> businessExceptionHandler(RuntimeException e) {
