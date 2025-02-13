@@ -4,6 +4,7 @@ import com.cc.ccPictureBackend.model.entity.User;
 import com.cc.ccPictureBackend.webSocket.model.PictureEditRequestMessage;
 import com.lmax.disruptor.RingBuffer;
 import com.lmax.disruptor.dsl.Disruptor;
+import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
 
 import javax.annotation.PreDestroy;
@@ -13,6 +14,7 @@ import javax.annotation.Resource;
  * @Author cuicui
  * @Description Disruptor 缓冲区的生产者，通过 shutDown 方式优雅停机
  */
+@Component
 public class PictureEditEventProducer {
 
     @Resource

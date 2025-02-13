@@ -9,6 +9,7 @@ import com.cc.ccPictureBackend.webSocket.model.PictureEditRequestMessage;
 import com.cc.ccPictureBackend.webSocket.model.PictureEditResponseMessage;
 import com.lmax.disruptor.WorkHandler;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Component;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -20,6 +21,7 @@ import javax.annotation.Resource;
  * @Author cuicui
  * @Description
  */
+@Component
 public class PictureEditEventWorkHandler implements WorkHandler<PictureEditEvent> {
 
     @Resource

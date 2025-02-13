@@ -11,7 +11,6 @@ import com.cc.ccPictureBackend.model.enums.SpaceTypeEnum;
 import com.cc.ccPictureBackend.service.PictureService;
 import com.cc.ccPictureBackend.service.SpaceService;
 import com.cc.ccPictureBackend.service.UserService;
-import com.sun.istack.internal.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
@@ -46,7 +45,7 @@ public class WsHandshakeInterceptor implements HandshakeInterceptor {
     private SpaceUserAuthManager spaceUserAuthManager;
 
     @Override
-    public boolean beforeHandshake(@NotNull ServerHttpRequest request, @NotNull ServerHttpResponse response, @NotNull WebSocketHandler wsHandler, @NotNull Map<String, Object> attributes) throws Exception {
+    public boolean beforeHandshake( ServerHttpRequest request,  ServerHttpResponse response,  WebSocketHandler wsHandler,  Map<String, Object> attributes) throws Exception {
         if (request instanceof ServletServerHttpRequest) {
             HttpServletRequest servletRequest = ((ServletServerHttpRequest) request).getServletRequest();
             // 获取请求参数

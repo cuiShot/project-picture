@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "pure-build": "vite build",
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
     "build-only": "vite build",
@@ -13,7 +14,8 @@
     "format": "prettier --write src/",
     "openapi": "node openapi.config.js"
   },
-  "dependencies": {
+
+"dependencies": {
     "ant-design-vue": "^4.2.6",
     "axios": "^1.7.9",
     "file-saver": "^2.0.5",
